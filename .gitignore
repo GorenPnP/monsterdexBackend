@@ -1,0 +1,10 @@
+__pycache__/
+.vscode/
+
+/venv/bin/
+/venv/include/
+/venv/lib/
+/venv/share/
+
+
+pip-selfcheck.json
