@@ -1,11 +1,17 @@
 from app.database import get_db
-from graphene import ObjectType, String, Int, Float, List
+from graphene import ObjectType, String, Int, Float, List, Field
 
 
 class Type(ObjectType):
 
 	id = Int()
 	name = String()
+
+
+class TypeEfficiency(ObjectType):
+	fromType = Int(name="from")
+	toType = Int(name="to")
+	efficiency = Float()
 
 
 class Attack(ObjectType):
@@ -40,6 +46,10 @@ class Monster(ObjectType):
 	description = String()
 	damage_prevention = String()
 	weight = Float()
+
+	# forms = List(of_type=Monster)
+	# evolution_pre = Field(Monster)
+	# evolution_after = Field(Monster)
 
 	types = List(of_type=Type)
 	attacks = List(of_type=Attack)
