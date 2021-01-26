@@ -1,8 +1,9 @@
-from graphene import ObjectType, String, Schema, Int, List, Boolean, Enum
+from graphene import ObjectType, String, Schema, Int, List, Boolean, Enum, ID
 from graphene.types.field import Field
+from functools import cmp_to_key
 
 from .database import get_db
-from .models import Attack, Monster, Type, TypeEfficiency
+from .models import Attack, Monster, Type, TypeEfficiency, Efficiency
 
 class RankOrdering(Enum):
 	ASC = "ASC",
@@ -13,34 +14,37 @@ class Query(ObjectType):
 	monster = Field(
 		List(Monster),
 		name=String(),
-		id=Int(),
-		types=List(Int),
+		id=List(ID),
+		types=List(ID, description="IDs of types"),
 		typeAnd=Boolean(default_value=True),
 		rankOrdering=RankOrdering()
 	)
 	attack = Field(
 		List(Attack),
 		name=String(),
-		id=Int(),
-		types=List(Int),
+		id=List(ID),
+		types=List(ID, description="IDs of types"),
 		typeAnd=Boolean(default_value=True)
 	)
 	type = Field(
 		List(Type),
 		name=String(),
-		id=Int()
+		id=List(ID)
 	)
 	typeEfficiency = Field(
-		TypeEfficiency,
-		fromType=Int(name="from", required=True),
-		toType=Int(name="to", required=True)
+		List(TypeEfficiency),
+		fromTypes=List(ID, description="IDs of types"),
+		toTypes=List(ID, description="IDs of types"),
+		includeNormalEfficiency=Boolean(default_value=False, description="include not only efficiencies that are effective & not effective, also normal effectives")
 	)
 
 	def resolve_monster(root, info, typeAnd, id=None, name=None, types=None, rankOrdering=None):
 		conn = get_db()
 		whereFilter = WhereFilter()
 
-		if id: whereFilter.add("id = ?", id)
+		if id:
+			questionMarks = ",".join(["?" for _ in id])
+			whereFilter.add(f"id IN ({questionMarks})", *id)
 
 		if name: whereFilter.add("name LIKE ?", f"%{name}%")
 
@@ -70,7 +74,9 @@ class Query(ObjectType):
 		conn = get_db()
 		whereFilter = WhereFilter()
 
-		if id: whereFilter.add("id = ?", id)
+		if id:
+			questionMarks = ",".join(["?" for _ in id])
+			whereFilter.add(f"id IN ({questionMarks})", *id)
 
 		if name: whereFilter.add("name LIKE ?", f"%{name}%")
 
@@ -99,7 +105,9 @@ class Query(ObjectType):
 		conn = get_db()
 		whereFilter = WhereFilter()
 
-		if id: whereFilter.add("id = ?", id)
+		if id:
+			questionMarks = ",".join(["?" for _ in id])
+			whereFilter.add(f"id IN ({questionMarks})", *id)
 
 		if name: whereFilter.add("name LIKE ?", f"%{name}%")
 
@@ -115,13 +123,68 @@ class Query(ObjectType):
 		return [dict(row) for row in result]
 
 	
-	def resolve_typeEfficiency(root, info, fromType, toType):
+	def resolve_typeEfficiency(root, info, includeNormalEfficiency, fromTypes=None, toTypes=None):
 		conn = get_db()
-		query = 'SELECT * FROM type_efficiency where "from" = ? AND "to" = ?'
-		result = get_db().cursor().execute(query, [fromType, toType]).fetchall()
+		whereFilter = WhereFilter()
+
+		if fromTypes:
+			questionMarks = ",".join(["?" for _ in fromTypes])
+			whereFilter.add(f'"from" IN ({questionMarks})', *fromTypes)
+
+		if toTypes:
+			questionMarks = ",".join(["?" for _ in toTypes])
+			whereFilter.add(f'"to" IN ({questionMarks})', *toTypes)
+
+		parameterRenaming = 'id, "from" as fromType, "to" as toType, efficiency as efficiencyValue'
+		query = 'SELECT {} FROM type_efficiency {} ORDER BY "from", "to"'.format(parameterRenaming, whereFilter.getClause())
+		result = get_db().cursor().execute(query, whereFilter.getArgs()).fetchall()
+
+		print(query, whereFilter.getArgs())
 
 		# convert list of result objects to list of dicts
-		return dict(result[0]) if result else {'from': fromType, 'to': toType, 'efficiency': 1.0}
+		formattedResult = []
+		for row in result:
+			vals = dict(row)
+			vals["efficiency"] = Efficiency.getValueFrom( vals["efficiencyValue"] )
+
+			formattedResult.append(vals)
+
+		if not includeNormalEfficiency: return formattedResult
+
+		
+		# add all missing relations and set their efficiency to normal (1.0)
+
+		# get ids of ALL types from db, because we need them for either "fromType" or "toType" or both
+		if not (fromTypes and toTypes):
+			allIds = [dict(row)["id"] for row in get_db().cursor().execute('SELECT id FROM type').fetchall()]
+
+			if not fromTypes: fromTypes = allIds
+			if not toTypes: toTypes = allIds
+
+		# get ids of all relations that have been solved by the db
+		allRelations = {}
+		for fromType in fromTypes: allRelations[fromType] = toTypes[:]	# shallow copy needed (not just reference)
+
+		# remove already resolved (by db) from allRelations
+		for row in formattedResult: allRelations[ row["fromType"] ].remove( row["toType"] )
+
+		# add missing relations with efficiency normal
+		missingRelations = []
+		for fromType, toTypes in allRelations.items():
+			for toType in toTypes:
+				missingRelations.append({"id": -1, "fromType": fromType, "toType": toType, "efficiency": Efficiency.NORMAL_EFFECTIVE, "efficiencyValue": 1.0})
+
+		# return both in a list, sorted by fromType and toType
+		return sorted(formattedResult + missingRelations, key=cmp_to_key(sortByFromAndTo))
+
+
+def sortByFromAndTo(relationA, relationB):
+	fromA = relationA["fromType"]
+	fromB = relationB["fromType"]
+	if fromA != fromB: return fromA -fromB
+
+	return relationA["toType"] - relationB["toType"]
+
 
 """
 facilitates filtering with a WHERE-clause with changing, multiple parameters
@@ -136,7 +199,6 @@ class WhereFilter:
 		self.args = []
 
 	def add(self, clause, *args):
-
 		if clause.count("?") != len(args):
 			raise Exception("Number of arguments does not match number of '?' in where-clause")
 

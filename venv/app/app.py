@@ -9,12 +9,12 @@ from .schema import schema
 app = Flask(__name__)
 
 
-# graphiql route on /
-app.add_url_rule('/', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True))
+# graphiql route on /graphiql
+app.add_url_rule('/graphiql', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True))
 
 
 # send GET with ..?query={..}
-@app.route("/json", methods=["GET"])
+@app.route("/", methods=["GET"])
 def get_json():
 
 	# If you return a dict from a view, it will be converted to a JSON response. Or use jsonify()
