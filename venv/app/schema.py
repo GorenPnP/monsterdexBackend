@@ -2,8 +2,8 @@ from graphene import ObjectType, String, Schema, Int, List, Boolean, Enum, ID
 from graphene.types.field import Field
 from functools import cmp_to_key
 
-from .database import get_db
-from .models import Attack, Monster, Type, TypeEfficiency, Efficiency
+from database import get_db
+from models import Attack, Monster, Type, TypeEfficiency, Efficiency
 
 class RankOrdering(Enum):
 	ASC = "ASC",
@@ -57,11 +57,11 @@ class Query(ObjectType):
 
 			# add as where clause
 			whereFilter.add(f"id IN ({selectMonsterId})", *[*types, len(types) if typeAnd else 1])
-		
+
 		# build final query
 		orderByClause = "id" if not rankOrdering else f"rank {rankOrdering[0]}"
 		MONSTER_SELECT_QUERY = "SELECT * FROM monster {} ORDER BY {}".format(whereFilter.getClause(), orderByClause)
-		
+
 		# execute query
 		print(MONSTER_SELECT_QUERY, whereFilter.getArgs())
 		result = conn.cursor().execute(MONSTER_SELECT_QUERY, whereFilter.getArgs()).fetchall()
@@ -89,10 +89,10 @@ class Query(ObjectType):
 
 			# add as where clause
 			whereFilter.add(f"id IN ({selectAttackId})", *[*types, len(types) if typeAnd else 1])
-		
+
 		# build final query
 		ATTACK_SELECT_QUERY = "SELECT * FROM attack {} ORDER BY id".format(whereFilter.getClause())
-		
+
 		# execute query
 		print(ATTACK_SELECT_QUERY, whereFilter.getArgs())
 		result = conn.cursor().execute(ATTACK_SELECT_QUERY, whereFilter.getArgs()).fetchall()
@@ -114,7 +114,7 @@ class Query(ObjectType):
 
 		# build final query
 		TYPE_SELECT_QUERY = "SELECT * FROM type {} ORDER BY name".format(whereFilter.getClause())
-		
+
 		# execute query
 		print(TYPE_SELECT_QUERY, whereFilter.getArgs())
 		result = conn.cursor().execute(TYPE_SELECT_QUERY, whereFilter.getArgs()).fetchall()
@@ -122,7 +122,7 @@ class Query(ObjectType):
 		# convert list of result objects to list of dicts
 		return [dict(row) for row in result]
 
-	
+
 	def resolve_typeEfficiency(root, info, includeNormalEfficiency, fromTypes=None, toTypes=None):
 		conn = get_db()
 		whereFilter = WhereFilter()
@@ -151,7 +151,7 @@ class Query(ObjectType):
 
 		if not includeNormalEfficiency: return formattedResult
 
-		
+
 		# add all missing relations and set their efficiency to normal (1.0)
 
 		# get ids of ALL types from db, because we need them for either "fromType" or "toType" or both

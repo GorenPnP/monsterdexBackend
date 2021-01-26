@@ -3,7 +3,7 @@ from flask.json import jsonify
 
 from flask_graphql import GraphQLView
 
-from .schema import schema
+from schema import schema
 
 
 app = Flask(__name__)

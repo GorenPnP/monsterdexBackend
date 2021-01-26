@@ -1,4 +1,4 @@
-from app.database import get_db
+from database import get_db
 from graphene import ObjectType, String, Int, Float, List, Field, ID, Enum
 from PIL import Image
 
@@ -20,7 +20,7 @@ class Efficiency(Enum):
 		if floatVal == 0.5: return Efficiency.NOT_EFFECTIVE
 		if floatVal == -1.0: return Efficiency.DOES_NOT_HIT
 		if floatVal == 1.0: return Efficiency.NORMAL_EFFECTIVE
-		
+
 		raise Error(f"No enum member for {floatVal} found")
 
 
@@ -119,7 +119,7 @@ class Monster(ObjectType):
 
 		# convert list of result objects to list of dicts
 		return [dict(row)["to"] for row in result]
-		
+
 	def resolve_types(self, info):
 
 		query = '''
@@ -144,7 +144,7 @@ class Monster(ObjectType):
 
 
 def _get_resized_png(path, max_size):
-		
+
 	buffer = BytesIO()
 
 	image = Image.open(path, mode="r")
