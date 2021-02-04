@@ -151,4 +151,4 @@ def _get_resized_png(path, max_size):
 	image.thumbnail(max_size, resample=Image.BICUBIC)
 
 	image.save(buffer, format="PNG")
-	return base64.b64encode(buffer.getvalue())
+	return base64.b64encode(buffer.getvalue()).decode("utf-8")
