@@ -84,13 +84,13 @@ class Monster(ObjectType):
 		max_size = 128, 128
 		id = self.get("id")
 
-		return _get_resized_png(Path(f"static/monster_images/{id}.png"), max_size)
+		return _get_resized_png(Path(f"monsterdexBackend/venv/static/monster_images/{id}.png"), max_size)
 
 	def resolve_image(self, info):
 		max_size = 1024, 1024
 		id = self.get("id")
 
-		return _get_resized_png(Path(f"static/monster_images/{id}.png"), max_size)
+		return _get_resized_png(Path(f"monsterdexBackend/venv/static/monster_images/{id}.png"), max_size)
 
 	def resolve_forms(self, info):
 		query = "select mon_2 from monster_forms where mon_1 = ? ORDER BY mon_2"

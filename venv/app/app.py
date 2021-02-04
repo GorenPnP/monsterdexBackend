@@ -1,5 +1,6 @@
 from flask import Flask, request, g
 from flask.json import jsonify
+from flask_cors import CORS
 
 from flask_graphql import GraphQLView
 
@@ -7,7 +8,7 @@ from schema import schema
 
 
 app = Flask(__name__)
-
+CORS(app)
 
 # graphiql route on /graphiql
 app.add_url_rule('/graphiql', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True))
