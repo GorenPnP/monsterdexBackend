@@ -6,7 +6,7 @@ from database import get_db
 from models import Attack, Monster, Type, TypeEfficiency, Efficiency
 
 class RankOrdering(Enum):
-	ASC = "ASC",
+	ASC = "ASC"
 	DESC = "DESC"
 
 class Query(ObjectType):
@@ -69,7 +69,8 @@ class Query(ObjectType):
 
 
 		# build final query
-		orderByClause = "id" if not rankOrdering else f"rank {rankOrdering[0]}"
+		print(rankOrdering)
+		orderByClause = "id" if not rankOrdering else f"rank {rankOrdering}"
 		paginationClause = f"LIMIT {pageSize} OFFSET {pageNr * pageSize}" if pageNr is not None and pageNr >= 0 else ""
 		MONSTER_SELECT_QUERY = "SELECT * FROM monster {} ORDER BY {} {}".format(whereFilter.getClause(), orderByClause, paginationClause)
 
