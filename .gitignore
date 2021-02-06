@@ -6,5 +6,9 @@ __pycache__/
 /venv/lib/
 /venv/share/
 
+# ignore all folders in /monster_images, but not /monster_images/*.png (or all other files directly in there)
+# subfolders are auto-generated
+/venv/static/monster_images/*/
+
 
 pip-selfcheck.json
