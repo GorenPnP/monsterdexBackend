@@ -17,19 +17,28 @@ class Query(ObjectType):
 		id=List(ID),
 		types=List(ID, description="IDs of types"),
 		typeAnd=Boolean(default_value=True),
-		rankOrdering=RankOrdering()
+
+		rankOrdering=RankOrdering(),
+		pageNr=Int(description="starts at 0"),
+		pageSize=Int(default_value=20)
 	)
 	attack = Field(
 		List(Attack),
 		name=String(),
 		id=List(ID),
 		types=List(ID, description="IDs of types"),
-		typeAnd=Boolean(default_value=True)
+		typeAnd=Boolean(default_value=True),
+
+		pageNr=Int(description="starts at 0"),
+		pageSize=Int(default_value=20)
 	)
 	type = Field(
 		List(Type),
 		name=String(),
-		id=List(ID)
+		id=List(ID),
+
+		pageNr=Int(description="starts at 0"),
+		pageSize=Int(default_value=20)
 	)
 	typeEfficiency = Field(
 		List(TypeEfficiency),
@@ -38,7 +47,7 @@ class Query(ObjectType):
 		includeNormalEfficiency=Boolean(default_value=False, description="include not only efficiencies that are effective & not effective, also normal effectives")
 	)
 
-	def resolve_monster(root, info, typeAnd, id=None, name=None, types=None, rankOrdering=None):
+	def resolve_monster(root, info, typeAnd, pageSize, id=None, name=None, types=None, rankOrdering=None, pageNr=None):
 		conn = get_db()
 		whereFilter = WhereFilter()
 
@@ -58,9 +67,11 @@ class Query(ObjectType):
 			# add as where clause
 			whereFilter.add(f"id IN ({selectMonsterId})", *[*types, len(types) if typeAnd else 1])
 
+
 		# build final query
 		orderByClause = "id" if not rankOrdering else f"rank {rankOrdering[0]}"
-		MONSTER_SELECT_QUERY = "SELECT * FROM monster {} ORDER BY {}".format(whereFilter.getClause(), orderByClause)
+		paginationClause = f"LIMIT {pageSize} OFFSET {pageNr * pageSize}" if pageNr is not None and pageNr >= 0 else ""
+		MONSTER_SELECT_QUERY = "SELECT * FROM monster {} ORDER BY {} {}".format(whereFilter.getClause(), orderByClause, paginationClause)
 
 		# execute query
 		print(MONSTER_SELECT_QUERY, whereFilter.getArgs())
@@ -70,7 +81,7 @@ class Query(ObjectType):
 		return [dict(row) for row in result]
 
 
-	def resolve_attack(root, info, typeAnd, id=None, name=None, types=None):
+	def resolve_attack(root, info, typeAnd, pageSize, id=None, name=None, types=None, pageNr=None):
 		conn = get_db()
 		whereFilter = WhereFilter()
 
@@ -91,7 +102,8 @@ class Query(ObjectType):
 			whereFilter.add(f"id IN ({selectAttackId})", *[*types, len(types) if typeAnd else 1])
 
 		# build final query
-		ATTACK_SELECT_QUERY = "SELECT * FROM attack {} ORDER BY id".format(whereFilter.getClause())
+		paginationClause = f"LIMIT {pageSize} OFFSET {pageNr * pageSize}" if pageNr is not None and pageNr >= 0 else ""
+		ATTACK_SELECT_QUERY = "SELECT * FROM attack {} ORDER BY id {}".format(whereFilter.getClause(), paginationClause)
 
 		# execute query
 		print(ATTACK_SELECT_QUERY, whereFilter.getArgs())
@@ -101,7 +113,7 @@ class Query(ObjectType):
 		return [dict(row) for row in result]
 
 
-	def resolve_type(root, info, id=None, name=None):
+	def resolve_type(root, info, pageSize, id=None, name=None, pageNr=None):
 		conn = get_db()
 		whereFilter = WhereFilter()
 
@@ -113,7 +125,8 @@ class Query(ObjectType):
 
 
 		# build final query
-		TYPE_SELECT_QUERY = "SELECT * FROM type {} ORDER BY name".format(whereFilter.getClause())
+		paginationClause = f"LIMIT {pageSize} OFFSET {pageNr * pageSize}" if pageNr is not None and pageNr >= 0 else ""
+		TYPE_SELECT_QUERY = "SELECT * FROM type {} ORDER BY name {}".format(whereFilter.getClause(), paginationClause)
 
 		# execute query
 		print(TYPE_SELECT_QUERY, whereFilter.getArgs())
