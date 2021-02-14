@@ -60,8 +60,8 @@ class Query(ObjectType):
 		if types:
 			# build complex query
 			typeIdQuestionmarks = ",".join(["?" for _ in types])
-			selectMonsterTypes = f"SELECT monster_id as id, type_id FROM monster_type WHERE type_id IN ({typeIdQuestionmarks})"
-			filterByTypeNum = f"SELECT id, count(*) as fittingTypes FROM ({selectMonsterTypes}) GROUP BY id HAVING fittingTypes = ?"
+			selectMonsterTypes = f"SELECT monster_id AS id, type_id FROM monster_type WHERE type_id IN ({typeIdQuestionmarks})"
+			filterByTypeNum = f"SELECT id, count(*) AS fittingTypes FROM ({selectMonsterTypes}) GROUP BY id HAVING fittingTypes = ?"
 			selectMonsterId = f"SELECT id FROM ({filterByTypeNum})"
 
 			# add as where clause
@@ -95,8 +95,8 @@ class Query(ObjectType):
 		if types:
 			# build complex query
 			typeIdQuestionmarks = ",".join(["?" for _ in types])
-			selectAttackTypes = f"SELECT attack_id as id, type_id FROM attack_type WHERE type_id IN ({typeIdQuestionmarks})"
-			filterByTypeNum = f"SELECT id, count(*) as fittingTypes FROM ({selectAttackTypes}) GROUP BY id HAVING fittingTypes = ?"
+			selectAttackTypes = f"SELECT attack_id AS id, type_id FROM attack_type WHERE type_id IN ({typeIdQuestionmarks})"
+			filterByTypeNum = f"SELECT id, count(*) AS fittingTypes FROM ({selectAttackTypes}) GROUP BY id HAVING fittingTypes = ?"
 			selectAttackId = f"SELECT id FROM ({filterByTypeNum})"
 
 			# add as where clause
@@ -149,7 +149,7 @@ class Query(ObjectType):
 			questionMarks = ",".join(["?" for _ in toTypes])
 			whereFilter.add(f'"to" IN ({questionMarks})', *toTypes)
 
-		parameterRenaming = 'id, "from" as fromType, "to" as toType, efficiency as efficiencyValue'
+		parameterRenaming = 'id, "from" AS fromType, "to" AS toType, efficiency AS efficiencyValue'
 		query = 'SELECT {} FROM type_efficiency {} ORDER BY "from", "to"'.format(parameterRenaming, whereFilter.getClause())
 		result = get_db().cursor().execute(query, whereFilter.getArgs()).fetchall()
 

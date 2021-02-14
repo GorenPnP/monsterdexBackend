@@ -44,17 +44,25 @@ class Attack(ObjectType):
 	description = String()
 
 	types = List(of_type=Type)
+	monsters = List(of_type=ID, description="IDs of monsters capable of this attack")
 
 	def resolve_types(self, info):
 
 		query = '''
-			select * from type where id IN (
-				select type_id from attack_type where attack_id=?
+			SELECT * FROM type WHERE id IN (
+				SELECT type_id FROM attack_type WHERE attack_id=?
 			)'''
 		result = get_db().cursor().execute(query, [self.get("id")]).fetchall()
 
 		# convert list of result objects to list of dicts
 		return [dict(row) for row in result]
+	
+	def resolve_monsters(self, info):
+		query = "SELECT monster_id FROM monster_attack WHERE attack_id = ? ORDER BY monster_id"
+		result = get_db().cursor().execute(query, [self.get("id")]).fetchall()
+
+		# convert list of result objects to list of dicts
+		return [dict(row)["monster_id"] for row in result]
 
 
 class Monster(ObjectType):
@@ -93,28 +101,28 @@ class Monster(ObjectType):
 		return _get_resized_png(id, max_size)
 
 	def resolve_forms(self, info):
-		query = "select mon_2 from monster_forms where mon_1 = ? ORDER BY mon_2"
+		query = "SELECT mon_2 FROM monster_forms WHERE mon_1 = ? ORDER BY mon_2"
 		result = get_db().cursor().execute(query, [self.get("id")]).fetchall()
 
 		# convert list of result objects to list of dicts
 		return [dict(row)["mon_2"] for row in result]
 
 	def resolve_opposite(self, info):
-		query = "select mon_2 from monster_opposite where mon_1 = ? ORDER BY mon_2"
+		query = "SELECT mon_2 FROM monster_opposite WHERE mon_1 = ? ORDER BY mon_2"
 		result = get_db().cursor().execute(query, [self.get("id")]).fetchall()
 
 		# convert list of result objects to list of dicts
 		return [dict(row)["mon_2"] for row in result]
 
 	def resolve_evolution_pre(self, info):
-		query = 'select "from" from monster_evolution where "to" = ? ORDER BY "from"'
+		query = 'SELECT "from" FROM monster_evolution WHERE "to" = ? ORDER BY "from"'
 		result = get_db().cursor().execute(query, [self.get("id")]).fetchall()
 
 		# convert list of result objects to list of dicts
 		return [dict(row)["from"] for row in result]
 
 	def resolve_evolution_after(self, info):
-		query = 'select "to" from monster_evolution where "from" = ? ORDER BY "to"'
+		query = 'SELECT "to" FROM monster_evolution WHERE "from" = ? ORDER BY "to"'
 		result = get_db().cursor().execute(query, [self.get("id")]).fetchall()
 
 		# convert list of result objects to list of dicts
@@ -123,8 +131,8 @@ class Monster(ObjectType):
 	def resolve_types(self, info):
 
 		query = '''
-			select * from type where id IN (
-				select type_id from monster_type where monster_id=?
+			SELECT * FROM type WHERE id IN (
+				SELECT type_id FROM monster_type WHERE monster_id = ?
 			)'''
 		result = get_db().cursor().execute(query, [self.get("id")]).fetchall()
 
@@ -134,8 +142,8 @@ class Monster(ObjectType):
 	def resolve_attacks(self, info):
 
 		query = '''
-			select * from attack where id IN (
-				select attack_id from monster_attack where monster_id=?
+			SELECT * FROM attack WHERE id IN (
+				SELECT attack_id FROM monster_attack WHERE monster_id = ?
 			)'''
 		result = get_db().cursor().execute(query, [self.get("id")]).fetchall()
 
