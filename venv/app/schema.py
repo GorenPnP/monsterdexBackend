@@ -104,7 +104,7 @@ class Query(ObjectType):
 
 		# build final query
 		paginationClause = f"LIMIT {pageSize} OFFSET {pageNr * pageSize}" if pageNr is not None and pageNr >= 0 else ""
-		ATTACK_SELECT_QUERY = "SELECT * FROM attack {} ORDER BY id {}".format(whereFilter.getClause(), paginationClause)
+		ATTACK_SELECT_QUERY = "SELECT * FROM attack {} ORDER BY name {}".format(whereFilter.getClause(), paginationClause)
 
 		# execute query
 		print(ATTACK_SELECT_QUERY, whereFilter.getArgs())
@@ -170,7 +170,7 @@ class Query(ObjectType):
 
 		# get ids of ALL types from db, because we need them for either "fromType" or "toType" or both
 		if not (fromTypes and toTypes):
-			allIds = [dict(row)["id"] for row in get_db().cursor().execute('SELECT id FROM type').fetchall()]
+			allIds = [dict(row)["id"] for row in get_db().cursor().execute('SELECT id FROM type ORDER BY name').fetchall()]
 
 			if not fromTypes: fromTypes = allIds
 			if not toTypes: toTypes = allIds
