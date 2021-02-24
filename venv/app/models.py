@@ -9,7 +9,7 @@ from pathlib import Path
 class Efficiency(Enum):
 	VERY_EFFECTIVE = 2.0,
 	NOT_EFFECTIVE = 0.5,
-	DOES_NOT_HIT = -1.0,
+	DOES_NOT_HIT = 0.0,
 	NORMAL_EFFECTIVE = 1.0
 
 	@classmethod
@@ -18,10 +18,10 @@ class Efficiency(Enum):
 
 		if floatVal == 2.0: return Efficiency.VERY_EFFECTIVE
 		if floatVal == 0.5: return Efficiency.NOT_EFFECTIVE
-		if floatVal == -1.0: return Efficiency.DOES_NOT_HIT
+		if floatVal == 0.0: return Efficiency.DOES_NOT_HIT
 		if floatVal == 1.0: return Efficiency.NORMAL_EFFECTIVE
 
-		raise Error(f"No enum member for {floatVal} found")
+		raise ValueError(f"No enum member for {floatVal} found")
 
 
 class Type(ObjectType):
@@ -33,7 +33,7 @@ class TypeEfficiency(ObjectType):
 	fromType = ID()
 	toType = ID()
 	efficiency = Efficiency()
-	efficiencyValue = Float(description="EfficiencyValue of 2.0: very effective, 0.5: not effective, -1: does not hit at all, 1.0: normal effective")
+	efficiencyValue = Float(description="EfficiencyValue of 2.0: very effective, 0.5: not effective, 0.0: does not hit at all, 1.0: normal effective")
 
 
 class Attack(ObjectType):
