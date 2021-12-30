@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, request, g
 from flask.json import jsonify
 from flask_cors import CORS
@@ -7,6 +9,21 @@ from flask_graphql import GraphQLView
 from schema import schema
 
 
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
+
+# add sentry
+sentry_sdk.init(
+    dsn=os.environ.get("SENTRY_DSN"),
+    integrations=[FlaskIntegration()],
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0
+)
+
+# init app
 app = Flask(__name__)
 CORS(app)
 

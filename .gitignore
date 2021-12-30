@@ -5,6 +5,7 @@ __pycache__/
 /venv/include/
 /venv/lib/
 /venv/share/
+/venv/.env
 
 # ignore all folders in /monster_images, but not /monster_images/*.png (or all other files directly in there)
 # subfolders are auto-generated
