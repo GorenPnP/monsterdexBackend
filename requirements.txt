@@ -8,3 +8,5 @@ python-dotenv==0.*
 sentry-sdk[flask]==1.*
 
 gunicorn
+
+markupsafe==2.0.1
